@@ -1,0 +1,734 @@
+External Variables:
+external variables are globally accessible
+
+#include <stdio.h>
+
+int max;                 /* maximum length seen so far */
+
+void printextern(void);
+
+/* print longest input line; specialized version */
+main() {
+    extern int max;
+
+    max = 20;
+    printf("%d\n", max);
+    printextern();
+
+    return 0;
+}
+
+void printextern(void) {
+	extern int max;
+	printf("%d\n", max);
+}
+
+--------
+
+Constants:
+#define VTAB '\013'
+#define VTAB '\xb'
+
+printf("I%cam\n", VTAB);
+
+--------
+
+Declarations:
+All variables must be declared before use
+
+int  lower, upper, step;
+char c, line[1000];
+
+--------
+
+Initialization:
+int low = 0;
+int days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+char pattern[] = "ould";
+char pattern[] = { ′o′, ′u′, ′l′, ′d′, ′\0′ };
+
+--------
+
+Static Variables:
+Static variables have a property of preserving their value even after they are out of their scope
+
+#include<stdio.h>
+int fun() {
+  static int count = 0;
+  count++;
+  return count;
+}
+  
+int main() {
+  printf("%d ", fun());
+  printf("%d ", fun());
+  return 0;
+}
+
+--------
+
+Block Structure:
+int i = 10;
+if (n > 0) {
+    int i;  /* declare a new i */
+
+    for (i = 0; i < n; i++)
+        ...
+}
+
+--------
+
+Goto and Labels:
+for ( ... )
+    for ( ... ) {
+        ...
+        if (disaster)
+            goto error;
+    }
+...
+
+error:
+          clean up the mess
+
+--------
+
+The C Preprocessor:
+conceptually a separate first step in compilation
+
+1. File Inclusion
+#include "filename"
+or
+#include <filename>
+/usr/lib/gcc/x86_64-linux-gnu/9/include/
+/usr/local/include/
+/usr/include/
+2. Macro Substitution
+#define  forever  for (;;)
+#define  square(x)  (x * x)
+int result = square(3);
+printf("%d\n", result);
+3. Conditional Inclusion
+#ifndef HDR
+#define HDR
+/* contents of hdr.h go here */
+#endif
+
+--------
+
+Header Files:
+Let us now consider dividing the program into several source files, as it might be if each of the components were substantially bigger.
+
+A header file contains: 
+1. function declarations
+2. macro definitions
+3. data type definitions
+
+
+testheader.h
+#define MAXLINE 1000    /* symbolic name or symbolic constant */
+#define LOWER  0        /* lower limit of table */
+
+int mygetline(char line[], int max);
+int mystrindex(char source[], char searchfor[]);
+
+struct point {
+    int x;
+    int y;
+} pt;
+
+#ifndef HEADER_FILE_NAME
+#define HEADER_FILE_NAME
+    #define STEP   20       /* step size */
+#endif
+
+#ifdef __LINUX
+    #define UPPER 300
+#elif defined(__WIN)
+    #define UPPER 200
+#else
+    #define UPPER 100
+#endif
+
+
+testgetline.c
+#include <stdio.h>
+
+/* getline:  get line into s, return length */
+int mygetline(char s[], int lim) {
+    int c, i;
+
+    i = 0;
+    //EOF -> Ctrl Z (Windows), Ctrl D (Unix)
+    while (--lim > 0 && (c=getchar()) != EOF && c != '\n')
+        s[i++] = c;
+    if (c == '\n')
+        s[i++] = c;
+    s[i] = '\0';
+    return i;
+}
+
+teststrindex.c
+/* strindex:  return index of t in s, −1 if none */
+int mystrindex(char s[], char t[]) {
+    int i, j, k;
+    static int bufp = 0;
+
+    for (i = 0; s[i] != '\0'; i++) {
+        for (j=i, k=0; t[k]!='\0' && s[j]==t[k]; j++, k++)
+            ;
+        if (k > 0 && t[k] == '\0')
+            return i;
+    }
+    return -1;
+}
+
+testfunction.c
+//gcc -D__LINUX testfunction.c testinclude/testgetline.c testinclude/teststrindex.c -o testfunction
+//gcc testfunction.c testinclude/testgetline.c testinclude/teststrindex.c -o testfunction
+#define __LINUX
+#include <stdio.h>
+#include "./testinclude/testheader.h"
+
+char pattern[] = "ould";    /* pattern to search for */
+#define  square(x)  (x * x)
+
+/* find all lines matching pattern */
+int main() {
+    char line[MAXLINE];
+    int found = 0;
+
+    printf("upper %d\n", UPPER);
+
+    while (mygetline(line, MAXLINE) > 0)
+        if (mystrindex(line, pattern) >= 0) {
+            printf("%s", line);
+            found++;
+        }
+    
+    return found;
+}
+
+--------
+
+Pointers and Addresses:
+int x = 1, y = 2, z[10];
+int *ip;         /* ip is a pointer to int */
+
+ip = &x;         /* ip now points to x */
+y = *ip;         /* y is now 1 */
+*ip = 0;         /* x is now 0 */
+*ip = *ip + 10;
+ip = &z[0];      /* ip now points to z[0] */
+
+--------
+
+Pointers and Function Arguments:
+void swap(int *px, int *py);
+
+int main() {
+    int a = 5;
+    int b = 3;
+    printf("original a=%d, b=%d\n", a, b);
+    swap(&a,&b);
+    printf("swap a=%d, b=%d\n", a, b);
+}
+
+void swap(int *px, int *py)  /* interchange *px and *py */
+{
+    int temp;
+
+    temp = *px;
+    *px = *py;
+    *py = temp;
+}
+
+--------
+
+Pointers and Arrays:
+char amessage[] = "now is the time";   /* an array */
+char *pmessage = "now is the time";    /* a pointer */
+
+amessage is an array, just big enough to hold the sequence of characters and ′\0′ that initializes it. Individual characters within the array may be changed but amessage will always refer to the same storage. On the other hand, pmessage is a pointer, initialized to point to a string constant; the pointer may subsequently be modified to point elsewhere, but the result is undefined if you try to modify the string contents.
+
+--------
+
+Multi-dimensional Arrays:
+static char daytab[2][13] = {
+    {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+    {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+};
+
+--------
+
+Initialization of Pointer Arrays:
+static char *name[] = {
+    "Illegal month",
+    "January", "February", "March",
+    "April", "May", "June",
+    "July", "August", "September",
+    "October", "November", "December"
+};
+printf("%s\n", name[1]);
+name[0] = "Illegal";
+
+--------
+
+Pointers vs. Multi-dimensional Arrays:
+char aname[][15] = { "Illegal month", "Jan", "Feb", "Mar" };
+aname[0] = "Illegal"; -> // This will give an Error which says assignment to expression with an array type
+stcpy(aname[0], "Illegal");
+    
+
+#include <stdio.h>
+
+char *changeString(char*);  /* changeString: function returning pointer to int */
+
+int main()
+{
+    /* A nice long string */
+    char month[256] = "December";                               
+ 
+    printf("Month 01, %s\n", month);
+
+    /* Remember that you are actually passing the address of the array when you pass string because arrays do not require an address operator (&) to be used to pass their addresses, so the values in the array string are modified. */
+
+    char *result = changeString(month);
+    //char *result = changeString(&month[0]);
+
+    printf("Month 01, %s\n", month);
+    printf("Month 01, %s\n", result);
+
+    return 0;
+}
+
+char *changeString(char* data) {
+    data = "January";
+    return data;
+}
+
+--------
+
+Double pointer:
+int val = 5;
+int *ptr1 = &val; // storing address of val to pointer ptr.
+*ptr1 = 10;
+int **ptr2 = &ptr1; // pointer to a pointer declared
+                    // which is pointing to an integer.
+**ptr2 = 20;
+
+
+typedef struct Ht_item Ht_item;
+
+// Define the Hash Table Item here
+struct Ht_item {
+    char* key;
+    char* value;
+};
+
+typedef struct HashTable HashTable;
+
+// Define the Hash Table here
+struct HashTable {
+    // Contains an array of pointers
+    // to items
+    Ht_item** items;
+    int size;
+    int count;
+};
+
+HashTable* create_table(int size) {
+    // Creates a new HashTable
+    HashTable* table = (HashTable*) malloc (sizeof(HashTable));
+    table->size = size;
+    table->count = 0;
+    table->items = (Ht_item**) calloc (table->size, sizeof(Ht_item*));
+    for (int i=0; i<table->size; i++)
+        table->items[i] = NULL;
+
+    return table;
+}
+
+--------
+
+Basics of Structures:
+struct point {
+    int x;
+    int y;
+};
+
+struct point pt;
+struct point maxpt = {320, 200};
+printf("%d,%d", pt.x, pt.y);
+
+--------
+
+Structures and Functions:
+struct point makepoint(int x, int y)
+{
+    struct point temp;
+
+    temp.x = x;
+    temp.y = y;
+    return temp;
+}
+
+struct point addpoint(struct point p1, struct point p2)
+{
+    p1.x += p2.x;
+    p1.y += p2.y;
+    return p1;
+}
+
+struct point origin, *pp;
+pp = &origin;
+printf("origin is (%d,%d)\n", (*pp).x, (*pp).y);
+printf("origin is (%d,%d)\n", pp->x, pp->y);
+
+struct key {
+    char *word;
+    int count;
+} keytab[NKEYS];
+
+struct key {
+    char *word;
+    int count;
+} keytab[] = {
+    "auto", 0,
+    "break", 0,
+    "case", 0,
+    "char", 0,
+    "const", 0,
+    "continue", 0,
+    "default", 0,
+    /* ... */
+    "unsigned", 0,
+    "void", 0,
+    "volatile", 0,
+    "while", 0
+};
+
+ { "auto", 0 },
+ { "break", 0 },
+ { "case", 0 },
+...
+
+--------
+
+Typedef:
+typedef int Length;
+
+makes the name Length a synonym for int. The type Length can be used in declarations, casts, etc., in exactly the same ways that the type int can be:
+
+Length    len, maxlen;
+Length    *lengths[];
+
+Similarly, the declaration
+
+typedef char *String;
+
+makes String a synonym for char * or character pointer, which may then be used in declarations and casts
+
+--------
+
+Unions:
+You can define a union with many members, but only one member can contain a value at any given time
+
+union u_tag {
+    int ival;
+    float fval;
+    char *sval;
+} u;
+
+if (utype == INT)
+    printf("%d\n", u.ival);
+else if (utype == FLOAT)
+    printf("%f\n", u.fval);
+else if (utype == STRING)
+    printf("%s\n", u.sval);
+else
+    printf("bad type %d in utype\n", utype);
+
+--------
+
+Bit-fields:
+#define KEYWORD  01
+#define EXTERNAL 02
+#define STATIC   04
+
+or
+
+enum { KEYWORD = 01, EXTERNAL = 02, STATIC = 04 };
+printf("%d\n", KEYWORD);
+
+--------
+
+String Operations:
+strcat(s,t)	concatenate t to end of s
+strncat(s,t,n)	concatenate n characters of t to end of s
+strcmp(s,t)	return negative, zero, or positive for s < t, s == t, or s > t
+strncmp(s,t,n)	same as strcmp but only in first n characters
+strcpy(s,t)	copy t to s
+strncpy(s,t,n)	copy at most n characters of t to s
+strlen(s)	return length of s
+strchr(s,c)	return pointer to first c in s, or NULL if not present
+strrchr(s,c)	return pointer to last c in s, or NULL if not present
+
+Character Class Testing and Conversion:
+isalpha(c)	non-zero if c is alphabetic, 0 if not
+isupper(c)	non-zero if c is upper case, 0 if not
+islower(c)	non-zero if c is lower case, 0 if not
+isdigit(c)	non-zero if c is digit, 0 if not
+isalnum(c)	non-zero if isalpha(c) or isdigit(c), 0 if not
+isspace(c)	non-zero if c is blank, tab, newline, return, formfeed, vertical tab
+toupper(c)	return c converted to upper case
+tolower(c)	return c converted to lower case
+
+Formatted Output:
+int printf(const char *format, ...)
+int fprintf(FILE *stream, const char *format, ...)
+int sprintf(char *s, const char *format, ...)
+sprintf is the same as printf except that the output is written into the string s, terminated with ′\0′.  s must be big enough to hold the result. The return count does not include the ′\0′.
+
+--------
+
+A Storage Allocator:
+malloc:
+malloc() doesn’t initialize the allocated memory
+
+int* ptr = (int*) malloc(5 * sizeof(int));
+if (ptr == NULL) {
+    printf("Memory not allocated.\n");
+    exit(0);
+}
+else {
+    // Memory has been successfully allocated
+    printf("Memory successfully allocated.\n");
+}
+Since the size of int is 4 bytes, this statement will allocate 20 bytes of memory. And, the pointer ptr holds the address of the first byte in the allocated memory.
+
+calloc:
+calloc() allocates the memory and also initializes every byte in the allocated memory to 0
+
+int* ptr = (int*) calloc(5 * sizeof(int));
+if (ptr == NULL) {
+    printf("Memory not allocated.\n");
+    exit(0);
+}
+else {
+    // Memory has been successfully allocated
+    printf("Memory successfully allocated.\n");
+}
+
+free:
+free(ptr);
+
+realloc:
+ptr = realloc(ptr, 10 * sizeof(int));
+
+--------
+
+typedef long Align;  /* for alignment to long boundary */
+
+union header {       /* block header: */
+    struct {
+        union header *ptr; /* next block if on free list */
+        unsigned size;     /* size of this block */
+    } s;
+    Align x;         /* force alignment of blocks */
+};
+
+typedef union header Header;
+
+--------
+
+Bitwise Operators:
+&    bitwise AND
+¦    bitwise inclusive OR
+^    bitwise exclusive OR / bitwise XOR
+<<   left shift
+>>   right shift
+~    one’s complement (unary) / bitwise NOT
+
+#include <stdio.h>
+
+int main() {
+
+  int t = 0;
+  int a = 5; //0000 0101
+
+  t = a << 1; //0000 1010
+  printf("%d\n", t);
+
+  t = a << 2; //0001 0100
+  printf("%d\n", t);
+
+  t = a >> 1; //0000 0010
+  printf("%d\n", t);
+
+  t = a >> 2; //0000 0001
+  printf("%d\n", t);
+
+  int b = 3;
+  t = a & b;
+  /*
+    0000 0101
+    0000 0011
+    _________&
+    0000 0001
+  */
+  printf("%d\n", t);
+
+  t = a | b;
+  /*
+    0000 0101
+    0000 0011
+    _________|
+    0000 0111
+  */
+  printf("%d\n", t);
+
+  t = a ^ b;
+  /*
+    0000 0101
+    0000 0011
+    _________^
+    0000 0110
+  */
+  printf("%d\n", t);
+
+  t = 5;
+  t = ~t;
+  printf("%d\n", t);
+
+  char p = 0x50; //0101 0000
+  p = ~p;
+  /*
+    0101 0000
+    _________~
+    1010 1111  -> 0xaf = 175
+    8+0+2+0=10=a 8+4+2+1=15=f 
+  */
+  printf("%c\n", p);
+
+  return 0;
+}
+
+--------
+
+Function Pointer:
+#include <stdio.h>
+
+void fun(int);
+
+int main() {
+    // fun_ptr is a pointer to function fun()
+    void (*fun_ptr)(int) = &fun;
+    //void (*fun_ptr)(int) = fun;
+
+    /* The above line is equivalent of following two
+       void (*fun_ptr)(int);
+       fun_ptr = &fun;
+    */
+
+    // Invoking fun() using fun_ptr
+    (*fun_ptr)(10);
+    //fun_ptr(10);
+
+    return 0;
+}
+
+void fun(int a) {
+    printf("Value of a is %d\n", a);
+}
+
+---
+
+#include <stdio.h>
+
+void fun1();
+void fun2();
+void wrapper(void (*fun)());
+  
+int main()
+{
+    wrapper(fun1);
+    wrapper(fun2);
+    return 0;
+}
+
+void fun1() { 
+    printf("Fun1\n");
+}
+
+void fun2() {
+    printf("Fun2\n");
+}
+
+void wrapper(void (*fun)()) {
+    printf("Wrapper\n");
+    fun();
+}
+
+--------
+
+Stringification:
+When a macro parameter is used with a leading `#', the preprocessor replaces it with the literal text of the actual argument, converted to a string constant. Stringification in C involves more than putting double-quote characters around the fragment. 
+#define xstr(s) str(s)
+#define str(s) #s
+#define foo 4
+char* x = str (foo);
+printf("%s\n", x);
+char* y = xstr (foo);
+printf("%s\n", y);
+/*
+str (foo)
+  ==> "foo"
+xstr (foo)
+  ==> xstr (4)
+  ==> str (4)
+  ==> "4"
+*/
+
+Concatenation:
+//In C language, ## operator is used for token pasting or token concatenation. Using this operator, we can combine two valid tokens into one valid token.
+#include <stdio.h>
+#define COMMAND(NAME)  { #NAME, NAME ## _command }
+struct command commands[] =
+{
+  COMMAND (quit),
+  COMMAND (help)
+};
+
+void quit_command();
+void help_command();
+
+int main() {
+    commands[0].function();
+    commands[1].function();
+    return 0;
+}
+
+void quit_command() {
+    printf("quit\n");
+}
+
+void help_command() {
+    printf("help\n");
+}
+
+---
+
+#define SINGLETON(t, inst, init) t* Singleton_##t() { \
+                 static t inst = init;               \
+                 return &inst;                       \
+                }
+
+#include <stdio.h>
+
+/* actual definition */
+SINGLETON(float, finst, 4.2);
+
+int main() {
+    printf("%f\n", *(Singleton_float()));
+    return 0;
+}
